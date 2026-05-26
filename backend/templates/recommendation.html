@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Recommendation - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h3 class="mb-3">Booking Prediction</h3>
+            <p>Enter your travel preferences and the system will predict booking probability using a Random Forest model.</p>
+            <form method="post" data-validate="true">
+                <div class="mb-3">
+                    <label class="form-label">Budget</label>
+                    <input type="number" class="form-control" name="user_budget" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Preferred Destination</label>
+                    <input type="text" class="form-control" name="preferred_destination" value="Goa" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Trip Duration (days)</label>
+                    <input type="number" class="form-control" name="trip_duration" value="4" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Previous Bookings</label>
+                    <input type="number" class="form-control" name="previous_bookings" value="1" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ratings</label>
+                    <input type="number" step="0.1" class="form-control" name="user_ratings" value="4.2" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Travel Season</label>
+                    <select class="form-select" name="travel_season">
+                        <option>Summer</option>
+                        <option>Winter</option>
+                        <option>Monsoon</option>
+                        <option>Spring</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Package Category</label>
+                    <select class="form-select" name="package_category">
+                        <option>Adventure</option>
+                        <option>Family</option>
+                        <option>Honeymoon</option>
+                        <option>Budget</option>
+                        <option>Luxury</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" type="submit">Predict Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h3 class="mb-3">Prediction Result</h3>
+            {% if prediction %}
+                <div class="alert alert-success">
+                    <strong>{{ prediction['prediction_label'] }} Booking Probability</strong><br>
+                    Confidence: {{ prediction['confidence'] }}
+                </div>
+                <p><strong>Recommended category:</strong> {{ prediction['recommended_category'] }}</p>
+                <ul>
+                    {% for label, prob in prediction['probabilities'].items() %}
+                    <li>{{ label }}: {{ prob }}</li>
+                    {% endfor %}
+                </ul>
+                <p class="text-muted">This output is produced dynamically by the trained Random Forest model. Your recommendation is explained in a simple way for the viva.</p>
+            {% else %}
+                <p class="text-muted">Submit the form to generate a booking prediction.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

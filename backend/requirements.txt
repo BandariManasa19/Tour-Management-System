@@ -1,0 +1,9 @@
+Flask
+pymysql
+python-dotenv
+Werkzeug
+pandas
+scikit-learn
+joblib
+openai
+reportlab

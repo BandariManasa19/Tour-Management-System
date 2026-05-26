@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="hero-card mb-4">
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <p class="mb-2">Student-friendly AI tour platform</p>
+            <h1 class="mb-3">Plan smarter trips with AI recommendations, itinerary generation, and booking insights.</h1>
+            <p class="mb-4">This project demonstrates full-stack web development, ML-based booking prediction, and GenAI-powered travel planning in a simple, easy-to-explain format.</p>
+            <div class="hero-actions">
+                <a href="{{ url_for('tours.packages') }}" class="btn btn-light btn-lg">Explore Packages</a>
+                <a href="{{ url_for('ai.recommendation') }}" class="btn btn-outline-light btn-lg">Try Prediction</a>
+                <a href="{{ url_for('ai.itinerary') }}" class="btn btn-outline-light btn-lg">Generate Itinerary</a>
+            </div>
+        </div>
+        <div class="col-lg-5 mt-4 mt-lg-0">
+            <div class="card text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">What you can do</h5>
+                    <ul class="mb-0">
+                        <li>Register and manage your bookings</li>
+                        <li>Use ML prediction for smart package suggestions</li>
+                        <li>Generate AI travel plans in seconds</li>
+                        <li>Track analytics and monitor admin data</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <div class="feature-icon mb-2">👥</div>
+            <h5>User authentication</h5>
+            <p class="mb-0">Simple registration, login, and session handling for students and travellers.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <div class="feature-icon mb-2">🤖</div>
+            <h5>AI assistance</h5>
+            <p class="mb-0">Generate itinerary ideas, ask the chatbot travel questions, and receive personalized suggestions.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <div class="feature-icon mb-2">📈</div>
+            <h5>Analytics dashboard</h5>
+            <p class="mb-0">Track total bookings, destination popularity, revenue trends, and prediction insights.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h4 class="mb-3">How the project works</h4>
+            <p>Users can browse packages, book tours, view booking history, and get dynamic recommendations. Admins can manage packages, users, and analytics. The AI features are connected to the backend and can be explained clearly in a viva.</p>
+            <a href="{{ url_for('about') }}" class="btn btn-outline-primary">Learn More</a>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h4 class="mb-3">Quick start</h4>
+            <ol>
+                <li>Set up the Python dependencies and database</li>
+                <li>Run the Flask app</li>
+                <li>Train the ML model</li>
+                <li>Open the pages and test the AI features</li>
+            </ol>
+            <a href="{{ url_for('contact') }}" class="btn btn-outline-primary">Need help?</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

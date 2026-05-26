@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Packages - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <h2>Explore Tour Packages</h2>
+        <p class="text-muted">Search by destination, category, and budget. All packages are easily editable from the admin dashboard.</p>
+    </div>
+</div>
+
+<form method="get" class="card p-3 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Search</label>
+            <input type="text" name="q" value="{{ search or '' }}" class="form-control" placeholder="Goa or adventure">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Category</label>
+            <select name="category" class="form-select">
+                <option value="">All</option>
+                <option value="Adventure" {% if category == 'Adventure' %}selected{% endif %}>Adventure</option>
+                <option value="Family" {% if category == 'Family' %}selected{% endif %}>Family</option>
+                <option value="Honeymoon" {% if category == 'Honeymoon' %}selected{% endif %}>Honeymoon</option>
+                <option value="Budget" {% if category == 'Budget' %}selected{% endif %}>Budget</option>
+                <option value="Luxury" {% if category == 'Luxury' %}selected{% endif %}>Luxury</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Destination</label>
+            <input type="text" name="destination" value="{{ destination or '' }}" class="form-control" placeholder="Jaipur">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Max Budget</label>
+            <input type="number" name="budget" value="{{ budget or '' }}" class="form-control">
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-primary w-100" type="submit">Go</button>
+        </div>
+    </div>
+</form>
+
+<div class="row g-4">
+    {% for package in packages %}
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <img src="{{ package['image_url'] }}" class="package-image" alt="{{ package['title'] }}">
+            <div class="card-body">
+                <span class="badge bg-primary badge-soft mb-2">{{ package['category'] }}</span>
+                <h5>{{ package['title'] }}</h5>
+                <p class="text-muted mb-2">{{ package['destination'] }} · {{ package['duration'] }} days</p>
+                <p>{{ package['description'] }}</p>
+                <p class="fw-bold">₹{{ package['price'] }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small>⭐ {{ package['rating'] }} · Seats: {{ package['available_slots'] }}</small>
+                    <div>
+                        <a href="{{ url_for('tours.package_detail', package_id=package['id']) }}" class="btn btn-sm btn-outline-primary">View</a>
+                        <a href="{{ url_for('tours.book_package', package_id=package['id']) }}" class="btn btn-sm btn-primary">Book</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

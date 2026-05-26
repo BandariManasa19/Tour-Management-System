@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Package - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row g-4 align-items-stretch" data-booking-page="true" data-price-per-person="{{ package['price'] }}" data-payment-deadline="{{ payment_deadline or '' }}">
+    <div class="col-lg-7">
+        <div class="card p-4 h-100">
+            <h3 class="mb-3">Plan your trip</h3>
+            <p class="text-muted mb-4">{{ package['title'] }} · {{ package['destination'] }}</p>
+
+            <form method="post" data-validate="true">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Travel Date</label>
+                        <input type="date" class="form-control" id="travel_date" name="travel_date" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Number of Travelers</label>
+                        <input type="number" min="1" class="form-control" id="num_people" name="num_people" value="1" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" name="payment_method">
+                            <option>Card</option>
+                            <option>UPI</option>
+                            <option>Wallet</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Special Requests</label>
+                        <textarea class="form-control" name="booking_notes" rows="3" placeholder="Optional notes for the travel team"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2 flex-wrap">
+                    <button class="btn btn-primary" type="submit">Create Booking</button>
+                    <a href="{{ url_for('tours.packages') }}" class="btn btn-outline-secondary">Browse More Packages</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card p-4 h-100">
+            <h5 class="mb-3">Booking summary</h5>
+            <ul class="list-unstyled mb-4">
+                <li><strong>Price per person:</strong> ₹{{ package['price'] }}</li>
+                <li><strong>Duration:</strong> {{ package['duration'] }} days</li>
+                <li><strong>Available slots:</strong> {{ package['available_slots'] }}</li>
+            </ul>
+
+            <div class="border rounded p-3 bg-light mb-3">
+                <p class="mb-1 text-muted">Estimated total</p>
+                <h3 id="booking-total">₹0</h3>
+                <small class="text-muted">The amount updates as you change the traveler count.</small>
+            </div>
+
+            {% if booking %}
+            <div class="alert alert-info mb-3">
+                <strong>Booking saved.</strong> Your booking is in <strong>Pending Payment</strong> state.
+            </div>
+            <div class="border rounded p-3">
+                <p class="mb-1"><strong>Payment timer</strong></p>
+                <div id="payment-timer" class="badge bg-warning text-dark">05:00</div>
+                <p class="small text-muted mt-2 mb-3">Complete your payment to confirm the booking.</p>
+                <button type="button" class="btn btn-success w-100" id="pay-now-button" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                    Pay Now
+                </button>
+                <p id="payment-expired-note" class="small text-danger mt-2 d-none">The payment window has closed. Please create a new booking if needed.</p>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary mb-0">
+                Choose a travel date and set the traveler count to generate the total.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Complete payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This demo simulates a payment confirmation for your booking.</p>
+                <p class="mb-0">After you confirm, the booking status will change to <strong>Confirmed</strong>.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                {% if booking %}
+                <form method="post" action="{{ url_for('tours.confirm_payment', booking_id=booking['id']) }}" id="payment-confirm-form">
+                    <button type="submit" class="btn btn-success">Confirm Payment</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

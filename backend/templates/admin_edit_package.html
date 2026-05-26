@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Package - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card p-4">
+            <h3>Edit Package</h3>
+            <form method="post" data-validate="true">
+                <div class="mb-3"><input class="form-control" name="title" value="{{ package['title'] }}" required></div>
+                <div class="mb-3"><input class="form-control" name="destination" value="{{ package['destination'] }}" required></div>
+                <div class="mb-3"><input class="form-control" name="category" value="{{ package['category'] }}" required></div>
+                <div class="mb-3"><input class="form-control" type="number" name="duration" value="{{ package['duration'] }}" required></div>
+                <div class="mb-3"><input class="form-control" type="number" step="0.01" name="price" value="{{ package['price'] }}" required></div>
+                <div class="mb-3"><input class="form-control" type="number" name="available_slots" value="{{ package['available_slots'] }}" required></div>
+                <div class="mb-3"><input class="form-control" type="number" step="0.1" name="rating" value="{{ package['rating'] }}" required></div>
+                <div class="mb-3"><input class="form-control" name="image_url" value="{{ package['image_url'] }}"></div>
+                <div class="mb-3"><textarea class="form-control" name="description" rows="4">{{ package['description'] }}</textarea></div>
+                <button class="btn btn-primary" type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

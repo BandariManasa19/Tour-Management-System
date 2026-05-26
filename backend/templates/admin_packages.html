@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Packages - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card p-4">
+            <h4>Add New Package</h4>
+            <form method="post" data-validate="true">
+                <div class="mb-3"><input class="form-control" name="title" placeholder="Package Name" required></div>
+                <div class="mb-3"><input class="form-control" name="destination" placeholder="Destination" required></div>
+                <div class="mb-3"><input class="form-control" name="category" placeholder="Category" required></div>
+                <div class="mb-3"><input class="form-control" type="number" name="duration" placeholder="Duration" required></div>
+                <div class="mb-3"><input class="form-control" type="number" step="0.01" name="price" placeholder="Price" required></div>
+                <div class="mb-3"><input class="form-control" type="number" name="available_slots" placeholder="Available Slots" required></div>
+                <div class="mb-3"><input class="form-control" type="number" step="0.1" name="rating" placeholder="Rating" value="4.5" required></div>
+                <div class="mb-3"><input class="form-control" name="image_url" placeholder="Image URL"></div>
+                <div class="mb-3"><textarea class="form-control" name="description" placeholder="Description" rows="3"></textarea></div>
+                <button class="btn btn-primary" type="submit">Add Package</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card p-4">
+            <h4>Existing Packages</h4>
+            <table class="table table-striped">
+                <thead><tr><th>Name</th><th>Destination</th><th>Category</th><th>Price</th><th>Actions</th></tr></thead>
+                <tbody>
+                    {% for package in packages %}
+                    <tr>
+                        <td>{{ package['title'] }}</td>
+                        <td>{{ package['destination'] }}</td>
+                        <td>{{ package['category'] }}</td>
+                        <td>₹{{ package['price'] }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.edit_package', package_id=package['id']) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a href="{{ url_for('admin.delete_package', package_id=package['id']) }}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

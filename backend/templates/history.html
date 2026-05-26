@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Booking History - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2>Booking History</h2>
+        <p class="text-muted">Track your payment status, travel dates, and cancellation details.</p>
+    </div>
+    <a href="{{ url_for('tours.export_history') }}" class="btn btn-outline-primary">Export as PDF</a>
+</div>
+
+<div class="card p-4">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Booking ID</th>
+                <th>Package</th>
+                <th>Destination</th>
+                <th>Travelers</th>
+                <th>Amount</th>
+                <th>Journey Dates</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td>{{ booking['id'] }}</td>
+                <td>{{ booking['title'] }}</td>
+                <td>{{ booking['destination'] }}</td>
+                <td>{{ booking['num_people'] }}</td>
+                <td>₹{{ booking['total_amount'] }}</td>
+                <td>{{ booking['journey_start_date'] or booking['travel_date'] }} → {{ booking['journey_end_date'] or booking['travel_date'] }}</td>
+                <td>{{ booking['status'] }}</td>
+                <td>{{ booking.get('payment_status', 'Pending') }}</td>
+                <td>
+                    {% if booking['status'] == 'Cancelled' %}
+                    <span class="text-muted">Cancelled</span>
+                    {% else %}
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-cancel-booking data-booking-id="{{ booking['id'] }}" data-booking-title="{{ booking['title'] }}" data-cancel-url="{{ url_for('tours.cancel_booking_route', booking_id=0) }}">
+                        Cancel
+                    </button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-labelledby="cancelBookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelBookingModalLabel">Cancel booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cancelBookingForm" method="post">
+                <div class="modal-body">
+                    <p>You are about to cancel <strong id="cancel-booking-title"></strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Reason (optional)</label>
+                        <textarea class="form-control" name="cancellation_reason" rows="3" placeholder="Tell us why you are cancelling"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">No, keep booking</button>
+                    <button type="submit" class="btn btn-danger">Yes, cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

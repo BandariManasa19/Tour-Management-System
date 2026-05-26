@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ package['title'] }} - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card p-4">
+            <img src="{{ package['image_url'] }}" class="package-image mb-3" alt="{{ package['title'] }}">
+            <h2>{{ package['title'] }}</h2>
+            <p class="text-muted">{{ package['destination'] }} · {{ package['duration'] }} days · {{ package['category'] }}</p>
+            <p>{{ package['description'] }}</p>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge bg-light text-dark">₹{{ package['price'] }}</span>
+                <span class="badge bg-light text-dark">⭐ {{ package['rating'] }}</span>
+                <span class="badge bg-light text-dark">Seats left: {{ package['available_slots'] }}</span>
+            </div>
+            <a href="{{ url_for('tours.book_package', package_id=package['id']) }}" class="btn btn-primary">Book this package</a>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card p-4">
+            <h4 class="mb-3">Write a Review</h4>
+            {% if session.get('user_id') %}
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">Rating</label>
+                    <select name="rating" class="form-select">
+                        <option value="5">5 - Excellent</option>
+                        <option value="4">4 - Good</option>
+                        <option value="3">3 - Average</option>
+                        <option value="2">2 - Fair</option>
+                        <option value="1">1 - Poor</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Comment</label>
+                    <textarea name="comment" class="form-control" rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+            {% else %}
+            <p>Please <a href="{{ url_for('auth.login') }}">log in</a> to add a review.</p>
+            {% endif %}
+
+            <h5 class="mt-4">Recent Reviews</h5>
+            {% if reviews %}
+                {% for review in reviews %}
+                <div class="border rounded p-3 mb-2">
+                    <p class="mb-1"><strong>{{ review['full_name'] }}</strong> · ⭐ {{ review['rating'] }}</p>
+                    <p class="mb-0">{{ review['comment'] }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No reviews yet. Be the first to share your experience.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

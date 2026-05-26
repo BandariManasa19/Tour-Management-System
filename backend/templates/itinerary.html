@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Itinerary Generator - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h3 class="mb-3">Generate a Personalized Itinerary</h3>
+            <p>Use the prompt-based AI module to create a destination-specific itinerary with budget, hotel, food, safety, and attraction suggestions.</p>
+            <form method="post" data-validate="true">
+                <div class="mb-3">
+                    <label class="form-label">Destination</label>
+                    <input type="text" class="form-control" name="destination" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Number of Days</label>
+                    <input type="number" class="form-control" name="days" value="3" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Budget</label>
+                    <input type="number" class="form-control" name="budget" value="5000" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Interests</label>
+                    <input type="text" class="form-control" name="interests" placeholder="adventure, food, culture" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Travel Type</label>
+                    <select class="form-select" name="travel_type">
+                        <option>student</option>
+                        <option>family</option>
+                        <option>honeymoon</option>
+                        <option>budget</option>
+                        <option>luxury</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" type="submit">Generate Itinerary</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h3 class="mb-3">AI Travel Plan</h3>
+            {% if plan %}
+                <pre style="white-space: pre-wrap; font-family: inherit;">{{ plan }}</pre>
+            {% else %}
+                <p class="text-muted">Your generated itinerary will appear here. If the API key is not set, the app will still create a dynamic fallback response using your inputs.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

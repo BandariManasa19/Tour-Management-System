@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3">
+            <h6>Total Bookings</h6>
+            <p class="display-6">{{ summary['total_bookings'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <h6>Total Users</h6>
+            <p class="display-6">{{ summary['total_users'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <h6>Revenue</h6>
+            <p class="display-6">₹{{ summary['revenue'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <h6>AI Predictions</h6>
+            <p class="display-6">{{ recent_predictions|length }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h4>Popular Destinations</h4>
+            <canvas id="destinationChart" height="220"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h4>Recent Predictions</h4>
+            <table class="table">
+                <thead>
+                    <tr><th>Label</th><th>Category</th><th>Confidence</th></tr>
+                </thead>
+                <tbody>
+                    {% for prediction in recent_predictions %}
+                    <tr>
+                        <td>{{ prediction['prediction_label'] }}</td>
+                        <td>{{ prediction['recommended_category'] }}</td>
+                        <td>{{ prediction['confidence'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = {{ destination_stats|map(attribute='destination')|list|tojson }};
+    const values = {{ destination_stats|map(attribute='bookings')|list|tojson }};
+
+    new Chart(document.getElementById('destinationChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Bookings',
+                data: values,
+                backgroundColor: ['#2d6cdf', '#1f9c92', '#f59e0b', '#8b5cf6', '#10b981']
+            }]
+        },
+        options: { responsive: true }
+    });
+</script>
+{% endblock %}

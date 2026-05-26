@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Travel Chatbot - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h3 class="mb-3">AI Travel Assistant</h3>
+            <p>Ask simple questions like “Best honeymoon destinations?” or “Budget trips in summer?”</p>
+            <form method="post" data-validate="true">
+                <div class="mb-3">
+                    <label class="form-label">Your Question</label>
+                    <input type="text" class="form-control" name="question" placeholder="Best budget trips in summer?" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Ask AI</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h3 class="mb-3">Assistant Reply</h3>
+            {% if reply %}
+                <p style="white-space: pre-wrap;">{{ reply }}</p>
+            {% else %}
+                <p class="text-muted">Your AI response will appear here.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

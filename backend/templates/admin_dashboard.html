@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5>Total Bookings</h5>
+            <p class="display-6">{{ summary['total_bookings'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5>Total Users</h5>
+            <p class="display-6">{{ summary['total_users'] }}</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5>Revenue</h5>
+            <p class="display-6">₹{{ summary['revenue'] }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h4>Admin Controls</h4>
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('admin.package_management') }}" class="btn btn-outline-primary">Manage Tour Packages</a>
+                <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">Manage Users</a>
+                <a href="{{ url_for('admin.bookings') }}" class="btn btn-outline-primary">Manage Bookings</a>
+                <a href="{{ url_for('ai.analytics') }}" class="btn btn-outline-primary">Open Analytics</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h4>Admin Notes</h4>
+            <p>Use the admin views to moderate packages, inspect bookings, and check how AI predictions are performing for the platform.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

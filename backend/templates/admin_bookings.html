@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Bookings - Smart Tour AI{% endblock %}
+
+{% block content %}
+<div class="card p-4">
+    <h3>All Bookings</h3>
+    <table class="table table-striped">
+        <thead><tr><th>ID</th><th>User</th><th>Package</th><th>Destination</th><th>Date</th><th>Travelers</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td>{{ booking['id'] }}</td>
+                <td>{{ booking['full_name'] }}</td>
+                <td>{{ booking['title'] }}</td>
+                <td>{{ booking['destination'] }}</td>
+                <td>{{ booking['travel_date'] }}</td>
+                <td>{{ booking['num_people'] }}</td>
+                <td>₹{{ booking['total_amount'] }}</td>
+                <td>{{ booking['status'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
