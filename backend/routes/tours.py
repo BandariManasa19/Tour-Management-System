@@ -6,6 +6,7 @@ from models.db import (
     add_review,
     cancel_booking,
     confirm_booking_payment,
+    count_packages,
     create_booking,
     get_all_packages,
     get_booking_by_id,
@@ -31,8 +32,35 @@ def packages():
     category = request.args.get("category", "")
     destination = request.args.get("destination", "")
     budget = request.args.get("budget", type=float)
-    packages = get_all_packages(search=search, category=category or None, destination=destination or None, budget=budget)
-    return render_template("packages.html", packages=packages, search=search, category=category, destination=destination, budget=budget)
+    page = request.args.get("page", 1, type=int)
+    per_page = 12
+
+    total_packages = count_packages(search=search, category=category or None, destination=destination or None, budget=budget)
+    total_pages = max(1, (total_packages + per_page - 1) // per_page)
+    if page < 1:
+        page = 1
+    elif page > total_pages:
+        page = total_pages
+
+    packages = get_all_packages(
+        search=search,
+        category=category or None,
+        destination=destination or None,
+        budget=budget,
+        page=page,
+        per_page=per_page,
+    )
+    return render_template(
+        "packages.html",
+        packages=packages,
+        search=search,
+        category=category,
+        destination=destination,
+        budget=budget,
+        page=page,
+        total_pages=total_pages,
+        total_packages=total_packages,
+    )
 
 
 @tours_bp.route("/package/<int:package_id>", methods=["GET", "POST"])
@@ -112,14 +140,19 @@ def confirm_payment(booking_id):
         flash("Please log in first.", "warning")
         return redirect(url_for("auth.login"))
 
-    booking = get_booking_by_id(booking_id)
-    if not booking or booking["user_id"] != session["user_id"]:
-        flash("Booking not found.", "warning")
-        return redirect(url_for("tours.booking_history"))
+    try:
+        booking = get_booking_by_id(booking_id)
+        if not booking or booking["user_id"] != session["user_id"]:
+            flash("Booking not found.", "warning")
+            return redirect(url_for("tours.booking_history"))
 
-    confirm_booking_payment(booking_id)
-    flash("Payment completed. Your booking is now confirmed.", "success")
-    return redirect(url_for("tours.booking_history"))
+        confirm_booking_payment(booking_id)
+        flash("Payment Confirmed Successfully.", "success")
+        return redirect(url_for("tours.booking_history"))
+    except Exception as exc:
+        print(f"Error confirming payment: {exc}")
+        flash("An error occurred while processing payment. Please try again.", "danger")
+        return redirect(url_for("tours.booking_history"))
 
 
 @tours_bp.route("/cancel/<int:booking_id>", methods=["POST"])
@@ -146,6 +179,13 @@ def booking_history():
         return redirect(url_for("auth.login"))
 
     bookings = get_user_bookings(session["user_id"])
+    # Convert sqlite3.Row objects to plain dictionaries so templates can safely use dict methods
+    try:
+        bookings = [dict(b) for b in bookings] if bookings else []
+    except Exception:
+        # Fallback: if objects are already dict-like, keep as-is
+        pass
+
     return render_template("history.html", bookings=bookings)
 
 
@@ -161,6 +201,10 @@ def export_history():
         return redirect(url_for("auth.login"))
 
     bookings = get_user_bookings(session["user_id"])
+    try:
+        bookings = [dict(b) for b in bookings] if bookings else []
+    except Exception:
+        pass
     response = None
     if bookings:
         from io import BytesIO

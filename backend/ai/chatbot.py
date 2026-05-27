@@ -1,7 +1,11 @@
 import os
 import re
+from typing import List
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except Exception:
+    OpenAI = None
 
 from .prompts import chatbot_prompt
 
@@ -14,85 +18,97 @@ def _normalize_question(question: str) -> str:
     return re.sub(r"[^a-z0-9\s]", "", question.lower())
 
 
+def _detect_intent_keywords(text: str) -> List[str]:
+    kws = []
+    mapping = {
+        "honeymoon": ["honeymoon", "romantic", "couple"],
+        "budget": ["budget", "cheap", "affordable"],
+        "adventure": ["adventure", "trek", "hiking", "ski", "thrill"],
+        "family": ["family"],
+        "beach": ["beach", "swim", "snorkel"],
+        "winter": ["winter", "snow"],
+        "summer": ["summer"],
+        "luxury": ["luxury", "premium", "resort", "5 star"],
+    }
+    for key, words in mapping.items():
+        if any(w in text for w in words):
+            kws.append(key)
+    return kws
+
+
 def build_contextual_fallback(question: str) -> str:
     text = _normalize_question(question)
+    intents = _detect_intent_keywords(text)
 
-    if any(keyword in text for keyword in ["honeymoon", "romantic", "couple"]):
-        return (
-            "For a romantic trip, our strongest picks are Kerala, Udaipur, Santorini-style luxury stays, and Maldives. "
-            "If you want a calm and scenic experience, Kerala is a great first choice, while Maldives suits a premium honeymoon."
-        )
+    # Short direct Q/A style for factual questions
+    if text.startswith("how") or text.startswith("what") or text.startswith("why") or text.startswith("when") or text.startswith("where"):
+        # Provide a concise, structured answer template
+        answer = "Here's a concise answer:\n"
+        answer += "- Summary: "
+        # Simple heuristics for travel queries
+        if "price" in text or "cost" in text or "budget" in intents:
+            answer += "Costs vary by package; budget options start around ₹6,000 and luxury packages can exceed ₹30,000.\n"
+            answer += "- Tips: compare inclusions (meals, transfers, guides) before booking.\n"
+        elif "best" in text or "recommend" in text or intents:
+            picks = []
+            if "honeymoon" in intents:
+                picks = ["Kerala Backwater Retreat", "Santorini Sunset Escape", "Luxury Maldives Getaway"]
+            elif "adventure" in intents:
+                picks = ["Leh Ladakh Explorer", "Iceland Northern Lights", "Banff Mountain Retreat"]
+            elif "beach" in intents:
+                picks = ["Goa Adventure Escape", "Andaman Island Escape", "Bali Beach Bliss"]
+            elif "family" in intents:
+                picks = ["Family Rajasthan Heritage", "Cape Town Wildlife Loop", "Ooty Hill Retreat"]
+            else:
+                picks = ["Goa Adventure Escape", "Kerala Backwater Retreat", "Bengaluru Food Trail"]
+            answer += "Recommended picks: " + ", ".join(picks) + ".\n"
+            answer += "- Next step: Tell me travel dates and number of people for a tailored option.\n"
+        else:
+            answer += "It depends on your preferences—tell me your travel dates, budget, and interests for tailored suggestions.\n"
+        return answer + "\nWould you like me to suggest specific packages?"
 
-    if any(keyword in text for keyword in ["budget", "cheap", "affordable"]):
-        return (
-            "Budget-friendly options include Budget Himachal Trail, Pune Weekend Retreat, Nainital Lakeside Escape, and Bengaluru Food Trail. "
-            "These packages are good for students and first-time travelers who want a memorable trip without overspending."
-        )
+    # Conversational style for general queries
+    opening = "Sure — I can help with that.\n"
+    if intents:
+        opening += "Based on what you said, here are quick suggestions:\n"
+        lines = []
+        if "honeymoon" in intents:
+            lines.append("• Romantic stays: Kerala backwaters, Santorini-style sunsets, Maldives overwater villas.")
+        if "budget" in intents:
+            lines.append("• Budget friendly: Himachal Trail, Pune Weekend Retreat, Nainital Lakeside Escape.")
+        if "adventure" in intents:
+            lines.append("• Adventure: Leh Ladakh, Banff, Iceland Northern Lights.")
+        if "family" in intents:
+            lines.append("• Family trips: Rajasthan Heritage, Cape Town Wildlife Loop, Mysore Palace Weekend.")
+        if "beach" in intents:
+            lines.append("• Beach picks: Goa, Andaman, Bali.")
+        opening += "\n".join(lines)
+        opening += "\n\nIf you want, I can narrow these to packages that match your dates and budget."
+        return opening
 
-    if any(keyword in text for keyword in ["summer"]):
-        return (
-            "For summer travel, consider Goa, Kerala, Andaman, and Bali. These destinations are popular for beaches, relaxed stays, and easy booking options."
-        )
-
-    if any(keyword in text for keyword in ["winter"]):
-        return (
-            "For winter travel, Gulmarg, Manali, Dharamshala, and Iceland Northern Lights are excellent picks. These packages are ideal when you want snow, cozy stays, and scenic mountain views."
-        )
-
-    if any(keyword in text for keyword in ["adventure", "trek", "hiking", "ski", "thrill"]):
-        return (
-            "Adventure-focused options include Goa Adventure Escape, Leh Ladakh Explorer, Banff Mountain Retreat, and Iceland Northern Lights. "
-            "These trips work well if you want a mix of outdoor activity and memorable sightseeing."
-        )
-
-    if any(keyword in text for keyword in ["family"]):
-        return (
-            "Family-friendly suggestions include Family Rajasthan Heritage, Cape Town Wildlife Loop, Ooty Hill Retreat, and Mysore Palace Weekend. "
-            "These tours are comfortable, easy to plan, and good for all age groups."
-        )
-
-    if any(keyword in text for keyword in ["luxury", "premium", "resort", "5 star"]):
-        return (
-            "Premium choices include Luxury Maldives Getaway, Dubai Desert & Skyline, Swiss Alps Luxury Rail, and Santorini Sunset Escape. "
-            "These packages focus on comfort, scenic stays, and high-touch guided experiences."
-        )
-
-    if any(keyword in text for keyword in ["student", "college", "young", "budget"]):
-        return (
-            "Student-friendly packages include Goa Adventure Escape, Budget Himachal Trail, and Bengaluru Food Trail. "
-            "They are easy to plan, affordable, and ideal for short university breaks."
-        )
-
-    if any(keyword in text for keyword in ["beach"]):
-        return (
-            "Beach destinations you can explore include Goa, Bali, Andaman, and Maldives. "
-            "Choose Goa for affordability, Andaman for crystal-clear water, or Maldives for a premium retreat."
-        )
-
-    if any(keyword in text for keyword in ["hill", "mountain", "manali", "ooty", "nainital", "dharamshala", "gulmarg"]):
-        return (
-            "Hill station ideas include Manali, Ooty, Nainital, Dharamshala, and Gulmarg. These routes are great for cool weather, scenic viewpoints, and easy weekend planning."
-        )
-
+    # Generic fallback helpful response
     return (
-        "I can help with honeymoon ideas, budget trips, summer and winter picks, adventure tours, family travel, luxury stays, student-friendly options, beach destinations, and hill stations. "
-        "If you want, I can also recommend the best package based on your travel preferences."
+        "I can help plan trips, recommend packages, and answer travel questions.\n"
+        "Try asking: 'Recommend a 5-day budget beach trip in June' or 'Best honeymoon spots in India'.\n"
+        "If you give me dates, budget, and number of travelers, I can suggest exact packages."
     )
 
 
 def answer_question(question: str) -> str:
     api_key = os.getenv("OPENAI_API_KEY")
 
-    if api_key:
+    # Prefer OpenAI if available
+    if api_key and OpenAI is not None:
         try:
             client = OpenAI(api_key=api_key)
             response = client.chat.completions.create(
                 model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
                 messages=[{"role": "user", "content": build_chat_prompt(question)}],
-                temperature=0.6,
+                temperature=float(os.getenv("OPENAI_TEMP", 0.6)),
             )
             return response.choices[0].message.content.strip()
         except Exception as exc:
             print(f"OpenAI chatbot response failed: {exc}")
 
+    # Local fallback that attempts to be helpful and human-like
     return build_contextual_fallback(question)

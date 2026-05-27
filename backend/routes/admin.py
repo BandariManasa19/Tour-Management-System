@@ -91,4 +91,8 @@ def users():
 @admin_required
 def bookings():
     bookings = get_all_bookings()
+    try:
+        bookings = [dict(b) for b in bookings] if bookings else []
+    except Exception:
+        pass
     return render_template("admin_bookings.html", bookings=bookings)

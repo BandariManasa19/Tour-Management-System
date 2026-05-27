@@ -311,10 +311,36 @@ def migrate_bookings_schema():
         "ADD COLUMN journey_end_date DATE",
         "ADD COLUMN booking_notes TEXT",
     ]
+
     for alteration in alterations:
         column_name = alteration.split()[2]
         if column_name not in columns:
             execute_sql(f"ALTER TABLE bookings {alteration}")
+
+
+def remove_duplicate_packages():
+    if DB_TYPE == "sqlite":
+        duplicates = fetch_all(
+            "SELECT title, MIN(id) AS keep_id FROM tour_packages GROUP BY title HAVING COUNT(*) > 1"
+        )
+        for row in duplicates:
+            title = row[0] if isinstance(row, tuple) else row["title"]
+            keep_id = row[1] if isinstance(row, tuple) else row["keep_id"]
+            execute("DELETE FROM tour_packages WHERE title = ? AND id != ?", (title, keep_id))
+        execute_sql("CREATE UNIQUE INDEX IF NOT EXISTS idx_tour_packages_title ON tour_packages(title)")
+        return
+
+    duplicates = fetch_all(
+        "SELECT title, MIN(id) AS keep_id FROM tour_packages GROUP BY title HAVING COUNT(*) > 1"
+    )
+    for row in duplicates:
+        title = row["title"] if isinstance(row, dict) else row[0]
+        keep_id = row["keep_id"] if isinstance(row, dict) else row[1]
+        execute("DELETE FROM tour_packages WHERE title = %s AND id != %s", (title, keep_id))
+    try:
+        execute_sql("CREATE UNIQUE INDEX idx_tour_packages_title ON tour_packages(title)")
+    except Exception:
+        pass
 
 
 def ensure_demo_admin():
@@ -330,6 +356,7 @@ def init_database():
     try:
         execute_sql(schema)
         migrate_bookings_schema()
+        remove_duplicate_packages()
         seed_demo_data()
         ensure_demo_admin()
     except Exception as exc:
@@ -338,347 +365,35 @@ def init_database():
 
 def seed_demo_data():
     packages = [
-        (
-            "Goa Adventure Escape",
-            "Goa",
-            "Adventure",
-            4,
-            9500,
-            "Coastal rides, water sports, and nightlife for students and thrill seekers.",
-            12,
-            4.7,
-            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Family Rajasthan Heritage",
-            "Jaipur",
-            "Family",
-            5,
-            11800,
-            "A comfortable family tour with forts, heritage hotels, and cultural experiences.",
-            8,
-            4.8,
-            "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Honeymoon in Kerala",
-            "Kerala",
-            "Honeymoon",
-            4,
-            14500,
-            "Backwater cruise, spa, and romantic houseboat stays in the lush southwest.",
-            6,
-            4.9,
-            "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Budget Himachal Trail",
-            "Manali",
-            "Budget",
-            3,
-            6400,
-            "A scenic budget trip with snow-clad views, local cafes, and low-cost lodging.",
-            15,
-            4.4,
-            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Luxury Maldives Getaway",
-            "Maldives",
-            "Luxury",
-            5,
-            26000,
-            "Premium resort stay with water villas, private transfers, and premium dining.",
-            4,
-            4.9,
-            "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Bali Beach Bliss",
-            "Bali",
-            "Beach",
-            5,
-            22000,
-            "Sunrise surfing, temple visits, and quiet beach resorts in Bali.",
-            10,
-            4.8,
-            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Dubai Desert & Skyline",
-            "Dubai",
-            "Luxury",
-            4,
-            32000,
-            "Premium city stays, desert safari, and a skyline experience with rooftop dining.",
-            6,
-            4.7,
-            "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Santorini Sunset Escape",
-            "Santorini",
-            "Honeymoon",
-            4,
-            28000,
-            "Romantic sunsets, caldera views, and boutique stays for couples.",
-            7,
-            4.9,
-            "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Prague Heritage Weekend",
-            "Prague",
-            "Cultural",
-            3,
-            16000,
-            "A compact European city break with castles, museums, and tram rides.",
-            9,
-            4.6,
-            "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Lisbon Coastal Discovery",
-            "Lisbon",
-            "Budget",
-            4,
-            14500,
-            "Affordable ocean views, tram rides, and pastel neighborhoods with easy travel.",
-            11,
-            4.5,
-            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Kyoto Culture Trail",
-            "Kyoto",
-            "Cultural",
-            5,
-            19000,
-            "Temple walks, tea houses, and seasonal festivals in land of quiet beauty.",
-            8,
-            4.8,
-            "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Tokyo Neon Adventure",
-            "Tokyo",
-            "Adventure",
-            4,
-            23500,
-            "Shopping, night markets, and fast-paced city experiences for energetic travelers.",
-            7,
-            4.6,
-            "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Banff Mountain Retreat",
-            "Banff",
-            "Adventure",
-            5,
-            21000,
-            "Glacier views, lake trails, and crisp mountain air for nature-focused travelers.",
-            8,
-            4.8,
-            "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Swiss Alps Luxury Rail",
-            "Interlaken",
-            "Luxury",
-            6,
-            31000,
-            "A scenic luxury rail itinerary with mountain stays and lake excursions.",
-            5,
-            4.9,
-            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Iceland Northern Lights",
-            "Reykjavik",
-            "Adventure",
-            5,
-            28000,
-            "Blue lagoon visits, geysers, and northern lights for an unforgettable winter escape.",
-            6,
-            4.8,
-            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Cape Town Wildlife Loop",
-            "Cape Town",
-            "Family",
-            6,
-            20500,
-            "A family-friendly journey featuring seaside drives, viewpoints, and safari moments.",
-            7,
-            4.7,
-            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Tuscany Countryside Escape",
-            "Tuscany",
-            "Cultural",
-            5,
-            18500,
-            "Sunlit villas, vineyards, and village walks ideal for relaxed cultural travel.",
-            9,
-            4.8,
-            "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Marrakesh Desert Discovery",
-            "Marrakesh",
-            "Adventure",
-            4,
-            17500,
-            "Markets, desert camps, and traditional riads with a mix of culture and adventure.",
-            8,
-            4.6,
-            "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Bengaluru Food Trail",
-            "Bengaluru",
-            "Budget",
-            3,
-            7000,
-            "A compact food-focused trip with breweries, local cafes, and city sightseeing.",
-            12,
-            4.4,
-            "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Northeast Assam Nature Tour",
-            "Assam",
-            "Adventure",
-            6,
-            11000,
-            "Tea estates, river rides, and forest trails in one of India's most colorful regions.",
-            10,
-            4.7,
-            "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Udaipur Royal Romance",
-            "Udaipur",
-            "Honeymoon",
-            4,
-            15000,
-            "Lake palaces, sunset cruises, and heritage stays for a romantic getaway.",
-            8,
-            4.8,
-            "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Ooty Hill Retreat",
-            "Ooty",
-            "Family",
-            4,
-            9400,
-            "Cool hill air, toy trains, and scenic walks for a peaceful family vacation.",
-            11,
-            4.6,
-            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Andaman Island Escape",
-            "Andaman",
-            "Beach",
-            5,
-            18000,
-            "Crystal lagoons, snorkeling, and island-hopping for beach lovers.",
-            9,
-            4.8,
-            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Chennai Cultural Weekend",
-            "Chennai",
-            "Cultural",
-            3,
-            8800,
-            "Temples, museums, and coastal dining with a rich cultural flavor.",
-            12,
-            4.5,
-            "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Leh Ladakh Explorer",
-            "Leh",
-            "Adventure",
-            7,
-            16500,
-            "High-altitude roads, monasteries, and thrilling scenic drives.",
-            7,
-            4.7,
-            "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Nainital Lakeside Escape",
-            "Nainital",
-            "Budget",
-            4,
-            7600,
-            "Misty lake views, easy trekking, and affordable boutique stays.",
-            13,
-            4.5,
-            "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Kashish Winter Wonderland",
-            "Gulmarg",
-            "Adventure",
-            5,
-            15500,
-            "Snow adventures, cable rides, and cozy mountain lodges for winter lovers.",
-            8,
-            4.7,
-            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Pune Weekend Retreat",
-            "Pune",
-            "Budget",
-            3,
-            6900,
-            "Relaxed short escape with heritage spots, cafes, and quick weekend planning.",
-            14,
-            4.4,
-            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Kochi Heritage & Backwaters",
-            "Kochi",
-            "Cultural",
-            4,
-            12500,
-            "Historic forts, spice markets, and serene backwater cruises.",
-            9,
-            4.7,
-            "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Mysore Palace Weekend",
-            "Mysore",
-            "Family",
-            3,
-            8200,
-            "A short heritage trip with royal palaces, gardens, and local cuisine.",
-            11,
-            4.6,
-            "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=900&q=80",
-        ),
-        (
-            "Dharamshala Mountain Calm",
-            "Dharamshala",
-            "Budget",
-            4,
-            9800,
-            "Forest trails, monastery views, and laid-back mountain town experiences.",
-            10,
-            4.5,
-            "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80",
-        ),
+        ("Goa Sunset Kayak", "Goa", "Adventure", 3, 9200, "Kayak through coastal waters, relax at beach cafes, and enjoy an easy sunset itinerary.", 14, 4.7, "https://images.unsplash.com/photo-1493558103817-58b2924bce98?auto=format&fit=crop&w=900&q=80"),
+        ("Manali Mountain Trek", "Manali", "Adventure", 5, 13500, "Guided mountain treks, river rafting, and cozy guesthouse stays in the hills.", 10, 4.6, "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=900&q=80"),
+        ("Kashmir Valley Retreat", "Kashmir", "Luxury", 6, 29200, "Luxury houseboat nights, meadow walks, and private valley transfers.", 5, 4.9, "https://images.unsplash.com/photo-1561484938-a643aee9ae61?auto=format&fit=crop&w=900&q=80"),
+        ("Ooty Tea Garden Stay", "Ooty", "Hill Station", 4, 11200, "Tea estate tours, lake boating, and hill-resort relaxation.", 12, 4.7, "https://images.unsplash.com/photo-1512572631757-2e11f2fd8472?auto=format&fit=crop&w=900&q=80"),
+        ("Kerala Backwater Escape", "Kerala", "Honeymoon", 5, 14800, "Romantic houseboat cruise, spa treatments, and scenic backwater views.", 8, 4.8, "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=900&q=80"),
+        ("Jaipur Palace & Culture", "Jaipur", "Cultural", 4, 10800, "Heritage hotels, palace tours, and evening cultural performances.", 10, 4.7, "https://images.unsplash.com/photo-1526481280697-3bfa7568dafe?auto=format&fit=crop&w=900&q=80"),
+        ("Shimla Heritage Journey", "Shimla", "Hill Station", 4, 9800, "Historic hill station walks, colonial hotels, and local bakery tastings.", 12, 4.5, "https://images.unsplash.com/photo-1495567720989-cebdbdd97913?auto=format&fit=crop&w=900&q=80"),
+        ("Ladakh High Pass Tour", "Leh", "Adventure", 7, 23800, "High-altitude routes, monasteries, and scenic lake stops with expert guides.", 7, 4.8, "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80"),
+        ("Andaman Beach Hideaway", "Andaman", "Beach", 5, 19200, "Island snorkeling, glass-bottom boat rides, and beachside resorts.", 8, 4.8, "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80"),
+        ("Pondicherry Coastal Weekend", "Pondicherry", "Romantic", 3, 9200, "French quarter stays, coastal walks, and relaxed seaside dining.", 10, 4.6, "https://images.unsplash.com/photo-1499613837595-7cf5368ad8b8?auto=format&fit=crop&w=900&q=80"),
+        ("Darjeeling Tea & Mountain", "Darjeeling", "Hill Station", 4, 11800, "Toy train rides, tea garden visits, and panoramic mountain views.", 10, 4.7, "https://images.unsplash.com/photo-1544797834-2662f09c537e?auto=format&fit=crop&w=900&q=80"),
+        ("Munnar Luxury Resort", "Munnar", "Luxury", 4, 17500, "Private resort villas, spice garden walks, and premium wellness experiences.", 6, 4.9, "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=80"),
+        ("Mysore Royal Family", "Mysore", "Family", 3, 8400, "Palace tours, zoo visits, and family-friendly heritage lodging.", 12, 4.6, "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=900&q=80"),
+        ("Coorg Coffee & Nature", "Coorg", "Relax", 4, 10900, "Plantation stays, forest trails, and coffee-tasting experiences.", 9, 4.7, "https://images.unsplash.com/photo-1483683804023-6ccdb62f86ef?auto=format&fit=crop&w=900&q=80"),
+        ("Rishikesh Adventure Camp", "Rishikesh", "Adventure", 4, 9600, "River rafting, campfire evenings, and yoga by the Ganges.", 14, 4.6, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80"),
+        ("Agra History Break", "Agra", "Cultural", 2, 6200, "Taj Mahal sunrise, heritage hotel stay, and city food tour.", 18, 4.5, "https://images.unsplash.com/photo-1460898173510-0a1010f9ddc6?auto=format&fit=crop&w=900&q=80"),
+        ("Udaipur Lake Palace Stay", "Udaipur", "Honeymoon", 4, 15500, "Luxury lakefront hotel, boat rides, and palace dining experiences.", 7, 4.8, "https://images.unsplash.com/photo-1507149833265-60c372daea22?auto=format&fit=crop&w=900&q=80"),
+        ("Meghalaya Waterfall Trail", "Meghalaya", "Wildlife", 5, 12800, "Waterfall treks, living root bridges, and forest camps.", 9, 4.7, "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=80"),
+        ("Sikkim Mountain Discovery", "Sikkim", "Adventure", 6, 14200, "Mountain passes, monasteries, and scenic valley stays.", 8, 4.7, "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80"),
+        ("Kodaikanal Cool Escape", "Kodaikanal", "Romantic", 3, 10200, "Lake views, cottage stays, and candlelit dinners.", 10, 4.6, "https://images.unsplash.com/photo-1483683804023-6ccdb62f86ef?auto=format&fit=crop&w=900&q=80"),
+        ("Dubai City & Desert", "Dubai", "International", 5, 32500, "City attractions, desert safari, and luxury hotel comforts.", 7, 4.8, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80"),
+        ("Bali Island Retreat", "Bali", "International", 5, 22800, "Beach villas, temple visits, and island wellness sessions.", 8, 4.9, "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80"),
+        ("Maldives Overwater Stay", "Maldives", "Luxury", 5, 29800, "Overwater villa stay, snorkeling, and private beach dining.", 5, 4.9, "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80"),
+        ("Swiss Alps Scenic Rail", "Switzerland", "International", 6, 34500, "Alpine rail journey, lakeside stays, and luxury mountain lodges.", 5, 4.9, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80"),
+        ("Paris Art & Cuisine", "Paris", "International", 5, 33000, "Museum tours, fine dining, and Seine river evenings.", 6, 4.8, "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=900&q=80"),
+        ("Thailand Beach & Culture", "Thailand", "International", 5, 17800, "Island beach time, cultural temple tours, and street food evenings.", 8, 4.7, "https://images.unsplash.com/photo-1493558103817-58b2924bce98?auto=format&fit=crop&w=900&q=80"),
+        ("Kanyakumari Sunset Tour", "Kanyakumari", "Beach", 3, 8900, "Sunrise and sunset views at India's southern tip with coastal heritage stays.", 12, 4.5, "https://images.unsplash.com/photo-1483683804023-6ccdb62f86ef?auto=format&fit=crop&w=900&q=80"),
+        ("Khajuraho Temple Journey", "Khajuraho", "Spiritual", 3, 9200, "UNESCO temples, light and sound show, and heritage hotel support.", 10, 4.6, "https://images.unsplash.com/photo-1460898173510-0a1010f9ddc6?auto=format&fit=crop&w=900&q=80"),
+        ("Ranthambore Wildlife Safari", "Ranthambore", "Wildlife", 3, 12900, "Safari drives, wildlife sightings, and lodge stays near the tiger reserve.", 7, 4.7, "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=80"),
     ]
 
     with get_cursor() as (cursor, conn):
@@ -741,7 +456,7 @@ def create_admin(full_name, email, password_hash):
     return execute(query, (full_name, email, password_hash))
 
 
-def get_all_packages(search=None, category=None, destination=None, budget=None):
+def get_all_packages(search=None, category=None, destination=None, budget=None, page=None, per_page=None):
     query = "SELECT * FROM tour_packages WHERE 1=1"
     params = []
     if search:
@@ -758,7 +473,30 @@ def get_all_packages(search=None, category=None, destination=None, budget=None):
         query += " AND price <= %s" if DB_TYPE != "sqlite" else " AND price <= ?"
         params.append(float(budget))
     query += " ORDER BY rating DESC"
+    if per_page is not None and page is not None:
+        query += " LIMIT %s OFFSET %s" if DB_TYPE != "sqlite" else " LIMIT ? OFFSET ?"
+        params.extend([int(per_page), int((page - 1) * per_page)])
     return fetch_all(query, tuple(params))
+
+
+def count_packages(search=None, category=None, destination=None, budget=None):
+    query = "SELECT COUNT(*) AS total FROM tour_packages WHERE 1=1"
+    params = []
+    if search:
+        query += " AND (title LIKE %s OR destination LIKE %s OR description LIKE %s)" if DB_TYPE != "sqlite" else " AND (title LIKE ? OR destination LIKE ? OR description LIKE ?)"
+        like = f"%{search}%"
+        params.extend([like, like, like])
+    if category:
+        query += " AND category = %s" if DB_TYPE != "sqlite" else " AND category = ?"
+        params.append(category)
+    if destination:
+        query += " AND destination = %s" if DB_TYPE != "sqlite" else " AND destination = ?"
+        params.append(destination)
+    if budget is not None:
+        query += " AND price <= %s" if DB_TYPE != "sqlite" else " AND price <= ?"
+        params.append(float(budget))
+    result = fetch_one(query, tuple(params))
+    return result[0] if DB_TYPE == "sqlite" else result["total"]
 
 
 def get_package_by_id(package_id):

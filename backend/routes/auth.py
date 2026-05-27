@@ -69,7 +69,7 @@ def admin_login():
             session["admin_name"] = admin["full_name"]
             session["role"] = "admin"
             flash("Admin login successful.", "success")
-            return redirect(url_for("admin.dashboard"))
+            return redirect(url_for("ai.admin_dashboard"))
 
         flash("Invalid admin credentials.", "danger")
 

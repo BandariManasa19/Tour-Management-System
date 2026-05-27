@@ -25,6 +25,13 @@
                 <option value="Honeymoon" {% if category == 'Honeymoon' %}selected{% endif %}>Honeymoon</option>
                 <option value="Budget" {% if category == 'Budget' %}selected{% endif %}>Budget</option>
                 <option value="Luxury" {% if category == 'Luxury' %}selected{% endif %}>Luxury</option>
+                <option value="Beach" {% if category == 'Beach' %}selected{% endif %}>Beach</option>
+                <option value="Hill Station" {% if category == 'Hill Station' %}selected{% endif %}>Hill Station</option>
+                <option value="International" {% if category == 'International' %}selected{% endif %}>International</option>
+                <option value="Wildlife" {% if category == 'Wildlife' %}selected{% endif %}>Wildlife</option>
+                <option value="Spiritual" {% if category == 'Spiritual' %}selected{% endif %}>Spiritual</option>
+                <option value="Cultural" {% if category == 'Cultural' %}selected{% endif %}>Cultural</option>
+                <option value="Relax" {% if category == 'Relax' %}selected{% endif %}>Relax</option>
             </select>
         </div>
         <div class="col-md-3">
@@ -33,7 +40,7 @@
         </div>
         <div class="col-md-2">
             <label class="form-label">Max Budget</label>
-            <input type="number" name="budget" value="{{ budget or '' }}" class="form-control">
+            <input type="number" name="budget" value="{{ budget or '' }}" class="form-control" min="0">
         </div>
         <div class="col-md-1">
             <button class="btn btn-primary w-100" type="submit">Go</button>
@@ -41,27 +48,65 @@
     </div>
 </form>
 
+{% if total_packages is defined %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <strong>{{ total_packages }}</strong> packages found
+        {% if search %}for "{{ search }}"{% endif %}
+        {% if category %}in {{ category }}{% endif %}
+        {% if destination %}at {{ destination }}{% endif %}
+    </div>
+    {% if total_packages == 0 %}
+    <div class="text-muted">Try a broader search or remove filters.</div>
+    {% endif %}
+</div>
+{% endif %}
+
 <div class="row g-4">
-    {% for package in packages %}
-    <div class="col-lg-4 col-md-6">
-        <div class="card h-100">
-            <img src="{{ package['image_url'] }}" class="package-image" alt="{{ package['title'] }}">
-            <div class="card-body">
-                <span class="badge bg-primary badge-soft mb-2">{{ package['category'] }}</span>
-                <h5>{{ package['title'] }}</h5>
-                <p class="text-muted mb-2">{{ package['destination'] }} · {{ package['duration'] }} days</p>
-                <p>{{ package['description'] }}</p>
-                <p class="fw-bold">₹{{ package['price'] }}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small>⭐ {{ package['rating'] }} · Seats: {{ package['available_slots'] }}</small>
-                    <div>
-                        <a href="{{ url_for('tours.package_detail', package_id=package['id']) }}" class="btn btn-sm btn-outline-primary">View</a>
-                        <a href="{{ url_for('tours.book_package', package_id=package['id']) }}" class="btn btn-sm btn-primary">Book</a>
+    {% if packages %}
+        {% for package in packages %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 package-card overflow-hidden">
+                <img src="{{ package['image_url'] }}" class="package-image" alt="{{ package['title'] }}">
+                <div class="card-body d-flex flex-column">
+                    <span class="badge bg-primary badge-soft mb-2">{{ package['category'] }}</span>
+                    <h5>{{ package['title'] }}</h5>
+                    <p class="text-muted mb-2">{{ package['destination'] }} · {{ package['duration'] }} days · Seats: {{ package['available_slots'] }}</p>
+                    <p class="text-sm text-muted mb-4">{{ package['description'] }}</p>
+                    <div class="mt-auto">
+                        <p class="fw-bold mb-3">₹{{ package['price'] }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-secondary">⭐ {{ package['rating'] }}</small>
+                            <div>
+                                <a href="{{ url_for('tours.package_detail', package_id=package['id']) }}" class="btn btn-sm btn-outline-primary me-1">View</a>
+                                <a href="{{ url_for('tours.book_package', package_id=package['id']) }}" class="btn btn-sm btn-primary">Book</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    {% endfor %}
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-secondary mb-0">No packages found matching your filters. Try a different destination, category, or budget.</div>
+        </div>
+    {% endif %}
 </div>
+
+{% if total_pages is defined and total_pages > 1 %}
+<nav aria-label="Package pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('tours.packages', q=search, category=category, destination=destination, budget=budget, page=page-1) }}">Previous</a>
+        </li>
+        {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="{{ url_for('tours.packages', q=search, category=category, destination=destination, budget=budget, page=p) }}">{{ p }}</a></li>
+        {% endfor %}
+        <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('tours.packages', q=search, category=category, destination=destination, budget=budget, page=page+1) }}">Next</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}

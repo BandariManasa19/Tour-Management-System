@@ -1,0 +1,8 @@
+backend/.venv/
+backend/__pycache__/
+backend/models/__pycache__/
+backend/routes/__pycache__/
+backend/ai/__pycache__/
+backend/ml/__pycache__/
+backend/tour_ai_local.db
+backend/.env
